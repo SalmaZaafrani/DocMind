@@ -89,7 +89,7 @@ public class AgentService {
     private Answer finish(String content, SourceCollector sources, List<Step> steps) {
         String text = content == null || content.isBlank()
                 ? "Je n'ai pas pu formuler de réponse. Pouvez-vous reformuler la question ?"
-                : content.trim();
+                : SourceCollector.normalizeCitations(content.trim());
         return new Answer(text, sources.citedIn(text), steps, llm.model());
     }
 

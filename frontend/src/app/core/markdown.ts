@@ -11,7 +11,8 @@ export function renderMarkdown(text: string, citations: Set<number> = new Set())
         citations.has(+n) ? `<span class="cite cite-${n}" title="Voir la source ${n}">${n}</span>` : m,
       );
 
-  const lines = text.replace(/\r/g, '').split('\n');
+  // Certains modèles citent au format 【1†L3-L4】 : on le ramène à [1]
+  const lines = text.replace(/\r/g, '').replace(/【(\d+)[^】]*】/g, '[$1]').split('\n');
   const out: string[] = [];
   let list: 'ul' | 'ol' | null = null;
   let tableRows = 0;

@@ -22,6 +22,10 @@ Assistant documentaire : posez vos questions à vos PDF, documents Word et image
 | `calculate` | Calcul exact (montants, pourcentages, délais) |
 | `create_note` | Enregistrement d'une synthèse dans Notes |
 
+| Connexion | Documents |
+|---|---|
+| ![Connexion](docs/screenshots/connexion.png) | ![Documents](docs/screenshots/documents.png) |
+
 ## Stack
 
 Spring Boot 4 (Java 21), Spring Security, JPA, PostgreSQL, PDFBox, Apache POI, Tess4J, Angular 20, Groq (API compatible OpenAI, appels d'outils), Docker.

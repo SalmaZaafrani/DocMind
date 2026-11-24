@@ -53,7 +53,7 @@ public class RagService {
                 messages.add(GroqClient.message("system", Prompts.RAG));
                 history.forEach(messages::add);
                 messages.add(GroqClient.message("user", "Extraits :\n\n" + context.toString().trim() + "\n\nQuestion : " + question));
-                String content = llm.chat(messages, null, 900).content();
+                String content = SourceCollector.normalizeCitations(llm.chat(messages, null, 900).content());
                 if (content != null && !content.isBlank()) {
                     return new Answer(content.trim(), sources.citedIn(content), List.of(step), llm.model());
                 }

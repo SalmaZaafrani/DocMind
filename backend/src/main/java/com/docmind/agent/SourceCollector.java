@@ -33,6 +33,11 @@ public class SourceCollector {
         return new ArrayList<>(byKey.values());
     }
 
+    /** Convertit les citations au format 【1†L3-L4】 (certains modèles) en [1]. */
+    public static String normalizeCitations(String text) {
+        return text == null ? null : text.replaceAll("【(\\d+)[^】]*】", "[$1]");
+    }
+
     /** Ne garde que les sources réellement citées dans le texte (toutes si aucune citation). */
     public List<Source> citedIn(String text) {
         List<Source> cited = new ArrayList<>();
