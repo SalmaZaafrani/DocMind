@@ -1,0 +1,143 @@
+<div class="chat" [class.has-sources]="activeMessage()?.sources?.length">
+  <section class="chat-main">
+    <header class="chat-head">
+      <h1 class="chat-title">{{ title() }}</h1>
+      <div class="scope">
+        <button type="button" class="btn btn-small scope-btn" (click)="scopeOpen.set(!scopeOpen())" [attr.aria-expanded]="scopeOpen()">
+          <svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 2.5h5.5L15 6v10.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          {{ scopeLabel() }}
+        </button>
+        @if (scopeOpen()) {
+          <div class="scope-menu" role="dialog" aria-label="Documents interrogés">
+            <p class="muted small">Limiter la recherche à certains documents :</p>
+            @for (d of documents(); track d.id) {
+              <label class="check">
+                <input type="checkbox" [checked]="selectedDocs().includes(d.id)" (change)="toggleDoc(d.id)">
+                <span>{{ d.name }}</span>
+              </label>
+            } @empty {
+              <p class="small">Aucun document. <a routerLink="/documents">Importer un document</a></p>
+            }
+            <div class="scope-actions">
+              <button type="button" class="link" (click)="selectedDocs.set([])">Tous les documents</button>
+              <button type="button" class="btn btn-small" (click)="scopeOpen.set(false)">Fermer</button>
+            </div>
+          </div>
+        }
+      </div>
+    </header>
+
+    <div class="thread" #scroller>
+      @if (!conversationId() && !messages().length) {
+        <div class="welcome">
+          <h2>Que voulez-vous savoir ?</h2>
+          <p class="muted">Les réponses citent leurs sources. En mode agent, DocMind enchaîne plusieurs recherches, lit les documents, calcule et peut enregistrer des notes.</p>
+          @if (documents().length) {
+            <div class="suggestions">
+              @for (s of suggestions; track s.text) {
+                <button type="button" class="suggestion" (click)="useSuggestion(s)">
+                  <span class="badge" [class.badge-agent]="s.mode === 'agent'">{{ s.mode === 'agent' ? 'Agent' : 'Rapide' }}</span>
+                  {{ s.text }}
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="empty-card">
+              <p>Commencez par importer un document (PDF, Word, texte ou image).</p>
+              <a class="btn btn-primary" routerLink="/documents">Importer un document</a>
+            </div>
+          }
+        </div>
+      }
+
+      @if (loading()) { <p class="muted center">Chargement…</p> }
+
+      @for (m of messages(); track m.id) {
+        @if (m.role === 'user') {
+          <div class="msg msg-user"><p>{{ m.content }}</p></div>
+        } @else if (m.pending) {
+          <div class="msg msg-bot pending">
+            <div class="working"><span class="spinner" aria-hidden="true"></span>{{ workingLabel() }}</div>
+          </div>
+        } @else {
+          <article class="msg msg-bot" [class.active]="activeMessage()?.id === m.id" (click)="activeMessageId.set(m.id)">
+            <div class="answer" [innerHTML]="html(m)" (click)="onAnswerClick(m, $event)"></div>
+
+            @if (m.mode === 'agent' && m.steps.length) {
+              <div class="steps">
+                <button type="button" class="steps-toggle" (click)="toggleSteps(m.id); $event.stopPropagation()" [attr.aria-expanded]="openSteps().has(m.id)">
+                  <span class="chev" [class.open]="openSteps().has(m.id)">›</span>
+                  Raisonnement de l'agent : {{ m.steps.length }} étape{{ m.steps.length > 1 ? 's' : '' }}
+                </button>
+                @if (openSteps().has(m.id)) {
+                  <ol class="step-list">
+                    @for (s of m.steps; track $index) {
+                      <li>
+                        <span class="step-icon" aria-hidden="true">{{ stepIcon(s.tool) }}</span>
+                        <div>
+                          <strong>{{ s.label }}</strong>
+                          <span class="muted">{{ s.output }}, {{ s.durationMs }} ms</span>
+                        </div>
+                      </li>
+                    }
+                  </ol>
+                }
+              </div>
+            }
+
+            <footer class="msg-meta">
+              <span class="badge" [class.badge-agent]="m.mode === 'agent'">{{ m.mode === 'agent' ? 'Agent' : 'Réponse rapide' }}</span>
+              <span>{{ m.model }}</span>
+              <span>{{ seconds(m.durationMs) }}</span>
+              @if (m.sources.length) {
+                <button type="button" class="link" (click)="activeMessageId.set(m.id); $event.stopPropagation()">{{ m.sources.length }} source{{ m.sources.length > 1 ? 's' : '' }}</button>
+              }
+            </footer>
+          </article>
+        }
+      }
+    </div>
+
+    <form class="composer" (ngSubmit)="send()">
+      @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+      <div class="composer-box">
+        <textarea name="draft" [(ngModel)]="draft" (keydown)="onKeydown($event)" rows="2"
+                  placeholder="Posez une question sur vos documents…" aria-label="Votre question"></textarea>
+        <div class="composer-bar">
+          <div class="segmented" role="radiogroup" aria-label="Mode de réponse">
+            <button type="button" role="radio" [attr.aria-checked]="mode() === 'rag'" [class.on]="mode() === 'rag'" (click)="mode.set('rag')"
+                    title="Une recherche, une réponse citée">Réponse rapide</button>
+            <button type="button" role="radio" [attr.aria-checked]="mode() === 'agent'" [class.on]="mode() === 'agent'" (click)="mode.set('agent')"
+                    title="Plusieurs recherches, lecture, calculs et notes">Agent</button>
+          </div>
+          @if (mode() === 'agent' && !llmEnabled()) { <span class="small muted">L'agent nécessite une clé Groq</span> }
+          <button class="btn btn-primary send" type="submit" [disabled]="sending() || !draft.trim()">
+            Envoyer
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <p class="composer-hint small muted">Entrée pour envoyer, Maj + Entrée pour aller à la ligne.</p>
+    </form>
+  </section>
+
+  @if (activeMessage(); as am) {
+    @if (am.sources.length) {
+      <aside class="sources" aria-label="Sources">
+        <h2>Sources</h2>
+        <p class="muted small">Passages utilisés pour la réponse sélectionnée.</p>
+        @for (s of am.sources; track s.n) {
+          <div class="source" [id]="'source-' + s.n" [class.hl]="highlighted() === s.n">
+            <div class="source-head">
+              <span class="cite">{{ s.n }}</span>
+              <strong>{{ s.documentName }}</strong>
+              <span class="muted small">p. {{ s.page }}</span>
+            </div>
+            <p class="excerpt">{{ s.excerpt }}</p>
+            <a class="link small" [routerLink]="sourceLink(s)" [queryParams]="{ page: s.page }">Ouvrir à la page {{ s.page }}</a>
+          </div>
+        }
+      </aside>
+    }
+  }
+</div>

@@ -1,0 +1,68 @@
+<div class="layout" [class.menu-open]="menuOpen()">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <a class="brand" routerLink="/assistant">
+        <img src="favicon.svg" alt="" width="28" height="28">
+        <span>DocMind</span>
+      </a>
+      <button class="icon-btn only-mobile" type="button" (click)="menuOpen.set(false)" aria-label="Fermer le menu">✕</button>
+    </div>
+
+    <button class="btn btn-primary btn-block new-chat" type="button" (click)="newConversation()">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Nouvelle conversation
+    </button>
+
+    <nav class="nav">
+      <a routerLink="/assistant" routerLinkActive="active">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h7A2.5 2.5 0 0 1 16 5.5v5a2.5 2.5 0 0 1-2.5 2.5H9l-3.5 3v-3A2.5 2.5 0 0 1 4 10.5z"/></svg>
+        Assistant
+      </a>
+      <a routerLink="/documents" routerLinkActive="active">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 2.5h5.5L15 6v10.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1zM11 2.5V6.5h4M7.5 10h5M7.5 13h3.5"/></svg>
+        Documents
+      </a>
+      <a routerLink="/notes" routerLinkActive="active">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3h10a1 1 0 0 1 1 1v9l-4 4H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM12 17v-4h4M7 7h6M7 10h4"/></svg>
+        Notes
+      </a>
+    </nav>
+
+    <div class="history">
+      <h3>Conversations</h3>
+      @for (c of api.conversations(); track c.id) {
+        <a class="history-item" [routerLink]="['/assistant', c.id]" routerLinkActive="active">
+          <span class="history-title">{{ c.title }}</span>
+          <button class="history-del" type="button" (click)="remove(c.id, $event)" aria-label="Supprimer la conversation">✕</button>
+        </a>
+      } @empty {
+        <p class="muted small">Vos conversations apparaîtront ici.</p>
+      }
+    </div>
+
+    <div class="sidebar-foot">
+      @if (api.status(); as s) {
+        <p class="engine" [class.off]="!s.llm">
+          <span class="dot"></span>
+          {{ s.llm ? 'IA : ' + s.model : 'Mode sans IA (clé Groq absente)' }}
+        </p>
+      }
+      <div class="me">
+        <div>
+          <strong>{{ auth.user()?.fullName }}</strong>
+          <span class="muted small">{{ auth.user()?.email }}</span>
+        </div>
+        <button class="btn btn-small" type="button" (click)="auth.logout()">Déconnexion</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="mobile-bar only-mobile">
+      <button class="icon-btn" type="button" (click)="menuOpen.set(true)" aria-label="Ouvrir le menu">☰</button>
+      <span class="brand"><img src="favicon.svg" alt="" width="22" height="22"> DocMind</span>
+    </header>
+    <router-outlet />
+  </div>
+  <div class="scrim only-mobile" (click)="menuOpen.set(false)"></div>
+</div>

@@ -1,0 +1,70 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1>Documents</h1>
+      <p class="muted">{{ documents().length }} document{{ documents().length > 1 ? 's' : '' }} interrogeable{{ documents().length > 1 ? 's' : '' }} par l'assistant.</p>
+    </div>
+    <label class="btn btn-primary">
+      Importer
+      <input type="file" [accept]="accept" multiple (change)="onPick($event)" hidden>
+    </label>
+  </header>
+
+  <label class="dropzone" [class.dragging]="dragging()"
+         (dragover)="$event.preventDefault(); dragging.set(true)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+    <input type="file" [accept]="accept" multiple (change)="onPick($event)" hidden>
+    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <strong>Déposez vos fichiers ici ou cliquez pour les choisir</strong>
+    <span class="muted small">PDF, Word (.docx), texte, Markdown, CSV, images (lues par OCR). 20 Mo maximum.</span>
+  </label>
+
+  @for (u of uploads(); track u) {
+    <div class="upload" [class.error]="u.state === 'error'">
+      <span class="upload-name">{{ u.name }}</span>
+      @switch (u.state) {
+        @case ('upload') { <span class="small muted">Envoi {{ u.progress }} %</span> }
+        @case ('processing') { <span class="small muted"><span class="spinner" aria-hidden="true"></span> Extraction du texte et indexation…</span> }
+        @case ('done') { <span class="small ok">Importé</span> }
+        @case ('error') {
+          <span class="small">{{ u.message }}</span>
+          <button type="button" class="link small" (click)="dismiss(u)">Fermer</button>
+        }
+      }
+      <div class="bar"><span [style.width.%]="u.state === 'processing' ? 100 : u.progress" [class.indeterminate]="u.state === 'processing'"></span></div>
+    </div>
+  }
+
+  @if (error()) { <p class="form-error">{{ error() }}</p> }
+
+  @if (loading()) {
+    <p class="muted">Chargement…</p>
+  } @else {
+    <div class="doc-list">
+      @for (d of documents(); track d.id) {
+        <article class="doc-card">
+          <div class="doc-kind" [attr.data-kind]="kind(d)">{{ kind(d) }}</div>
+          <div class="doc-body">
+            <a class="doc-name" [routerLink]="['/documents', d.id]">{{ d.name }}</a>
+            <p class="doc-summary">{{ d.summary }}</p>
+            <p class="doc-meta small muted">
+              {{ d.pageCount }} {{ d.contentType.includes('pdf') ? 'page' : 'section' }}{{ d.pageCount > 1 ? 's' : '' }},
+              {{ d.wordCount.toLocaleString('fr-FR') }} mots, {{ d.chunkCount }} passages indexés, {{ size(d.sizeBytes) }}, importé le {{ date(d.uploadedAt) }}
+              @if (d.ocrUsed) { <span class="badge">OCR</span> }
+            </p>
+          </div>
+          <div class="doc-actions">
+            <a class="btn btn-small" [routerLink]="['/documents', d.id]">Lire</a>
+            @if (confirmDelete() === d.id) {
+              <button type="button" class="btn btn-small btn-danger" (click)="remove(d)">Confirmer</button>
+              <button type="button" class="link small" (click)="confirmDelete.set(null)">Annuler</button>
+            } @else {
+              <button type="button" class="btn btn-small" (click)="confirmDelete.set(d.id)">Supprimer</button>
+            }
+          </div>
+        </article>
+      } @empty {
+        <p class="muted center">Aucun document pour l'instant.</p>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,21 @@
+<div class="page viewer">
+  <a class="link small back" routerLink="/documents">‹ Tous les documents</a>
+  @if (error()) { <p class="form-error">{{ error() }}</p> }
+  @if (detail(); as d) {
+    <header class="page-head">
+      <div>
+        <h1>{{ d.document.name }}</h1>
+        <p class="muted">{{ d.document.summary }}</p>
+      </div>
+      <a class="btn btn-primary" routerLink="/assistant">Poser une question</a>
+    </header>
+    @for (p of d.pages; track p.page) {
+      <section class="sheet" [id]="'page-' + p.page" [class.target]="isTarget(p.page)">
+        <span class="sheet-num">{{ d.document.contentType.includes('pdf') ? 'Page' : 'Section' }} {{ p.page }}</span>
+        <div class="sheet-text">{{ p.text }}</div>
+      </section>
+    }
+  } @else if (!error()) {
+    <p class="muted">Chargement…</p>
+  }
+</div>

@@ -1,0 +1,34 @@
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1>Notes</h1>
+      <p class="muted">Synthèses et listes d'actions enregistrées par l'agent à votre demande.</p>
+    </div>
+  </header>
+  @if (error()) { <p class="form-error">{{ error() }}</p> }
+  @if (loading()) {
+    <p class="muted">Chargement…</p>
+  } @else {
+    <div class="notes">
+      @for (n of notes(); track n.id) {
+        <article class="note">
+          <header>
+            <h2>{{ n.title }}</h2>
+            <span class="small muted">{{ date(n.createdAt) }}</span>
+          </header>
+          <div class="answer" [innerHTML]="html(n)"></div>
+          <footer>
+            @if (n.conversationId) { <a class="link small" [routerLink]="['/assistant', n.conversationId]">Voir la conversation</a> }
+            <button type="button" class="link small" (click)="copy(n)">{{ copied() === n.id ? 'Copié' : 'Copier' }}</button>
+            <button type="button" class="link small danger" (click)="remove(n)">Supprimer</button>
+          </footer>
+        </article>
+      } @empty {
+        <div class="empty-card">
+          <p>Aucune note. En mode agent, demandez par exemple : « Résume le contrat et enregistre une note. »</p>
+          <a class="btn btn-primary" routerLink="/assistant">Ouvrir l'assistant</a>
+        </div>
+      }
+    </div>
+  }
+</div>

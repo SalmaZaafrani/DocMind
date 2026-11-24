@@ -1,0 +1,59 @@
+<main class="auth">
+  <section class="auth-intro">
+    <div class="brand brand-lg">
+      <img src="favicon.svg" alt="" width="36" height="36">
+      <span>DocMind</span>
+    </div>
+    <h1>Posez vos questions à vos documents.</h1>
+    <p class="lead">Contrats, rapports, procédures : DocMind retrouve la réponse, cite la page exacte et, en mode agent, enchaîne recherches, lectures et calculs pour vous.</p>
+
+    <figure class="auth-sample" aria-label="Exemple de réponse">
+      <p class="sample-q">Quelle pénalité Sigma doit-elle pour l'incident du 8 août ?</p>
+      <p class="sample-a">Le retard a été de 2 jours <span class="cite">1</span> et la pénalité est de 1 % du prix annuel par jour <span class="cite">2</span>, soit <strong>368 € HT</strong>.</p>
+      <ol class="sample-steps">
+        <li>Recherche : « incident 8 août »</li>
+        <li>Recherche : « pénalité retard »</li>
+        <li>Calcul : 18400 × 0,01 × 2</li>
+      </ol>
+    </figure>
+  </section>
+
+  <section class="auth-panel">
+    <form class="auth-form" (ngSubmit)="submit()" novalidate>
+      <h2>{{ mode() === 'login' ? 'Connexion' : 'Créer un compte' }}</h2>
+
+      @if (mode() === 'register') {
+        <label class="field">
+          <span>Nom complet</span>
+          <input name="fullName" [(ngModel)]="fullName" autocomplete="name">
+        </label>
+      }
+      <label class="field">
+        <span>Adresse email</span>
+        <input name="email" type="email" [(ngModel)]="email" autocomplete="username" placeholder="nom@entreprise.com">
+      </label>
+      <label class="field">
+        <span>Mot de passe</span>
+        <input name="password" type="password" [(ngModel)]="password"
+               [attr.autocomplete]="mode() === 'login' ? 'current-password' : 'new-password'">
+        @if (mode() === 'register') { <small>8 caractères minimum</small> }
+      </label>
+
+      <p class="form-error" role="alert">{{ error() }}</p>
+
+      <button class="btn btn-primary btn-block" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Un instant…' : mode() === 'login' ? 'Se connecter' : 'Créer mon compte' }}
+      </button>
+
+      @if (mode() === 'login') {
+        <button class="btn btn-block" type="button" (click)="demo()" [disabled]="loading()">Essayer avec le compte de démonstration</button>
+        <p class="hint">Le compte démo contient trois documents d'exemple : une politique de télétravail, un contrat de maintenance et un rapport d'activité.</p>
+      }
+
+      <p class="switch">
+        {{ mode() === 'login' ? 'Pas encore de compte ?' : 'Déjà inscrit ?' }}
+        <button type="button" class="link" (click)="switchMode()">{{ mode() === 'login' ? 'Créer un compte' : 'Se connecter' }}</button>
+      </p>
+    </form>
+  </section>
+</main>
